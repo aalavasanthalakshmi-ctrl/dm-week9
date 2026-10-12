@@ -1,0 +1,94 @@
+#include<stdio.h>
+#include<string.h>
+#include<ctype.h>
+
+int main()
+{
+    char input[200];
+    char data[100] = "";
+    char newChar[10] = "";
+    int pos = 0;
+
+    // Read whole input like ["ABCDEF",3,"X"] or ABCDEF 3 X
+    // This parser works for both formats
+    fread(input, 1, sizeof(input)-1, stdin);
+
+    int i=0, j=0;
+    int quoteCount = 0;
+
+    // Parse first quoted string -> data
+    for(i=0; input[i]!='\0'; i++){
+        if(input[i]=='"'){
+            quoteCount++;
+            if(quoteCount==1){
+                j=0;
+                i++;
+                while(input[i]!='"' && input[i]!='\0'){
+                    data[j++]=input[i++];
+                }
+                data[j]='\0';
+            } else if(quoteCount==3){
+                j=0;
+                i++;
+                while(input[i]!='"' && input[i]!='\0'){
+                    newChar[j++]=input[i++];
+                }
+                newChar[j]='\0';
+                break;
+            }
+        }
+    }
+
+    // Parse number
+    for(i=0; input[i]!='\0'; i++){
+        if(isdigit(input[i])){
+            pos = 0;
+            while(isdigit(input[i])){
+                pos = pos*10 + (input[i]-'0');
+                i++;
+            }
+            break;
+        }
+    }
+
+    // Fallback if simple input format (no quotes)
+    if(data[0]=='\0'){
+        sscanf(input, "%s %d %s", data, &pos, newChar);
+    }
+
+    char stuffed[200];
+    int k=0;
+
+    // DLESTX
+    strcpy(stuffed, "DLESTX");
+    k = strlen(stuffed);
+
+    // First part
+    for(i=0; i<pos-1 && i<(int)strlen(data); i++){
+        stuffed[k++] = data[i];
+    }
+    // Stuff DLE + X + DLE
+    stuffed[k++]='D';
+    stuffed[k++]='L';
+    stuffed[k++]='E';
+    stuffed[k++]=newChar[0];
+    stuffed[k++]='D';
+    stuffed[k++]='L';
+    stuffed[k++]='E';
+
+    // Remaining
+    for(; i<(int)strlen(data); i++){
+        stuffed[k++] = data[i];
+    }
+    // DLEETX
+    stuffed[k++]='D';
+    stuffed[k++]='L';
+    stuffed[k++]='E';
+    stuffed[k++]='E';
+    stuffed[k++]='T';
+    stuffed[k++]='X';
+    stuffed[k]='\0';
+
+    printf("Stuffed Frame: %s", stuffed);
+    return 0;
+}
